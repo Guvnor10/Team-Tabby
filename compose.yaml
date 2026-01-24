@@ -8,6 +8,13 @@
 # from Docker Hub - https://hub.docker.com/_/mongo. 
 # You can add other services your application may depend on here.
 
+# Comment made by Guvnor Nnanna on 1/20/2026: This tutorial was from the Docker Desktop. I will attach a screenshot of the tutorial for reference
+# and submit it through Moodle for you to see.
+
+# Links to Youtube Tutorials that helped me understand Docker Compose better: 
+# https://www.youtube.com/watch?v=DQdB7wFEygo
+# https://www.youtube.com/watch?v=zFa9_K8BS8I&t=77s
+
 services:
   todo-app:
     build:
