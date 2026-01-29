@@ -1,0 +1,15 @@
+# Tutorials followed:
+# https://www.youtube.com/watch?v=SXwC9fSwct8
+# https://www.youtube.com/watch?v=HG6yIjZapSA
+# https://www.youtube.com/watch?v=Qw9zlE3t8Ko
+
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+
+  redis:
+    image: redis:7-alpine
