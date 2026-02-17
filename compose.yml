@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16
+    container_name: mealie_db
+    environment:
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+    volumes:
+      - mealie_db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    container_name: mealie
+    depends_on:
+      - db
+    ports:
+      - "9925:9000"
+    environment:
+      DB_ENGINE: postgres
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+      BASE_URL: http://localhost:9925
+      ALLOW_SIGNUP: "true"
+    volumes:
+      - mealie_data:/app/data
+    restart: unless-stopped
+
+volumes:
+  mealie_db:
+  mealie_data:
