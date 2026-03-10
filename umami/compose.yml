@@ -1,0 +1,71 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+    volumes:
+      - ./data/mealie-db:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - webnet
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    depends_on:
+      - db
+    environment:
+      DB_ENGINE: postgres
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+      BASE_URL: http://localhost:8080
+      ALLOW_SIGNUP: "true"
+    volumes:
+      - ./data/mealie:/app/data
+    networks:
+      - webnet
+
+  umami_db:
+    image: postgres:14
+    container_name: umami_db
+    environment:
+      POSTGRES_DB: umami
+      POSTGRES_USER: umami
+      POSTGRES_PASSWORD: password
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - ./data/umami-db:/var/lib/postgresql/data
+    networks:
+      - webnet
+
+  umami:
+    image: ghcr.io/umami-software/umami:latest
+    container_name: umami
+    ports:
+      - "3000:3000"
+    environment:
+      DATABASE_URL: "postgresql://umami:password@umami_db:5432/umami?sslmode=disable"
+    depends_on:
+      - umami_db
+    networks:
+      - webnet
+
+  nginx:
+    image: nginx:mainline-alpine
+    container_name: nginx
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - mealie
+    networks:
+      - webnet
+    restart: unless-stopped
+
+networks:
+  webnet:
