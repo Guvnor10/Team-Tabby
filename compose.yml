@@ -13,8 +13,6 @@ services:
     image: ghcr.io/mealie-recipes/mealie:latest
     depends_on:
       - db
-    ports:
-      - "9925:9000"
     environment:
       DB_ENGINE: postgres
       POSTGRES_SERVER: db
@@ -25,9 +23,71 @@ services:
       BASE_URL: http://localhost:9925
       ALLOW_SIGNUP: "true"
     volumes:
-      - mealie_data:/app/data
+      - ./mealie_data:/app/data
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:alpine
+    depends_on:
+      - mealie
+    ports:
+      - "9925:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx_logs:/var/log/nginx
+    restart: unless-stopped
+
+  matomo-db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: matomo
+      MARIADB_USER: matomo
+      MARIADB_PASSWORD: matomo_pass
+      MARIADB_ROOT_PASSWORD: matomo_root_pass
+    volumes:
+      - ./matomo_db:/var/lib/mysql
+    restart: unless-stopped
+
+  matomo:
+    image: matomo:latest
+    depends_on:
+      - matomo-db
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: matomo
+      MATOMO_DATABASE_PASSWORD: matomo_pass
+      MATOMO_DATABASE_DBNAME: matomo
+    ports:
+      - "8080:80"
+    volumes:
+      - ./matomo_data:/var/www/html
+    restart: unless-stopped
+
+  matomo-log-import:
+    image: matomo:latest
+    depends_on:
+      - matomo
+      - proxy
+    volumes:
+      - ./nginx_logs:/var/log/nginx:ro
+    command: >
+      sh -c "
+        sleep 30;
+        while true; do
+          python /var/www/html/misc/log-analytics/import_logs.py
+            --url=http://matomo
+            --idsite=1
+            --recorders=1
+            --enable-http-errors
+            /var/log/nginx/access.log || true;
+          sleep 60;
+        done
+      "
     restart: unless-stopped
 
 volumes:
   mealie_db:
-  mealie_data:
+  matomo_db:
+  matomo_data:
