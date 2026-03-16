@@ -1,0 +1,24 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Logs / temp
+*.log
+*.tmp
+
+
+
+.env
+
+ackee-data/diagnostic.data/
+ackee-data/journal/
+
+ackee-data/mongod.lock
+ackee-data/WiredTiger.lock
+
+mealie-data/mealie.log
+
+mealie-db/postmaster.pid
+mealie-db/postmaster.opts

@@ -6,15 +6,15 @@ services:
       POSTGRES_USER: mealie
       POSTGRES_PASSWORD: mealiepass
     volumes:
-      - mealie_db:/var/lib/postgresql/data
+      - ./mealie-db:/var/lib/postgresql/data
     restart: unless-stopped
 
   mealie:
     image: ghcr.io/mealie-recipes/mealie:latest
     depends_on:
       - db
-    ports:
-      - "9925:9000"
+    expose:
+      - "9000"
     environment:
       DB_ENGINE: postgres
       POSTGRES_SERVER: db
@@ -22,12 +22,41 @@ services:
       POSTGRES_DB: mealie
       POSTGRES_USER: mealie
       POSTGRES_PASSWORD: mealiepass
-      BASE_URL: http://localhost:9925
+      BASE_URL: http://localhost:8080
       ALLOW_SIGNUP: "true"
     volumes:
-      - mealie_data:/app/data
+      - ./mealie-data:/app/data
     restart: unless-stopped
 
-volumes:
-  mealie_db:
-  mealie_data:
+  ackee-db:
+    image: mongo:4.4
+    container_name: ackee-db
+    volumes:
+      - ./ackee-data:/data/db
+    restart: unless-stopped
+
+  ackee:
+    image: electerious/ackee
+    container_name: ackee
+    depends_on:
+      - ackee-db
+    ports:
+      - "3000:3000"
+    environment:
+      ACKEE_MONGODB: mongodb://ackee-db:27017/ackee
+      ACKEE_USERNAME: admin
+      ACKEE_PASSWORD: password123
+      ACKEE_ALLOW_ORIGIN: http://localhost:8080
+      ACKEE_TRACKER: pixel
+      NODE_ENV: development
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:alpine
+    depends_on:
+      - mealie
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+    restart: unless-stopped
