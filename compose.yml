@@ -6,7 +6,7 @@ services:
       POSTGRES_USER: mealie
       POSTGRES_PASSWORD: mealiepass
     volumes:
-      - mealie_db:/var/lib/postgresql/data
+      - ./mealie_db:/var/lib/postgresql/data
     restart: unless-stopped
 
   mealie:
@@ -87,7 +87,22 @@ services:
       "
     restart: unless-stopped
 
-volumes:
-  mealie_db:
-  matomo_db:
-  matomo_data:
+  selenium:
+    image: selenium/standalone-chrome:latest
+    shm_size: "2gb"
+    ports:
+      - "4444:4444"
+    restart: unless-stopped
+
+  traffic-generator:
+    build: ./traffic
+    depends_on:
+      selenium:
+        condition: service_started
+      proxy:
+        condition: service_started
+    environment:
+      SELENIUM_URL: http://selenium:4444
+      TARGET_URL: http://proxy
+    restart: "no"
+

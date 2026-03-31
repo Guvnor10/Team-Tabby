@@ -1,7 +1,5 @@
-# Docker volumes
 matomo_data/
 matomo_db/
 mealie_data/
 
-# Logs
 nginx_logs/
