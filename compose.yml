@@ -87,6 +87,18 @@ services:
       "
     restart: unless-stopped
 
+  traffic_generator:
+    image: selenium/standalone-chromium
+    depends_on:
+      - proxy
+    shm_size: 2gb
+    volumes:
+      - ./traffic_generator:/traffic_generator
+    working_dir: /traffic_generator
+    command: >
+      bash -c "pip install selenium && python selenium.py"
+    restart: unless-stopped
+
 volumes:
   mealie_db:
   matomo_db:
