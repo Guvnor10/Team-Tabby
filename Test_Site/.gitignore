@@ -1,0 +1,9 @@
+.vscode/
+bot/
+__pycache__/
+**/__pycache__/
+*.pyc
+matomo_data/
+matomo_db/
+mealie_data/
+mealie_db/

@@ -1,0 +1,77 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+    volumes:
+      - ./mealie_db:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:latest
+    depends_on:
+      - db
+    environment:
+      DB_ENGINE: postgres
+      POSTGRES_SERVER: db
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: mealie
+      POSTGRES_USER: mealie
+      POSTGRES_PASSWORD: mealiepass
+      BASE_URL: http://localhost:9925
+      ALLOW_SIGNUP: "true"
+    volumes:
+      - ./mealie_data:/app/data
+    restart: unless-stopped
+
+  proxy:
+    image: nginx:alpine
+    depends_on:
+      - mealie
+    ports:
+      - "9925:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    restart: unless-stopped
+
+  matomo-db:
+    image: mariadb:11
+    environment:
+      MARIADB_DATABASE: matomo
+      MARIADB_USER: matomo
+      MARIADB_PASSWORD: matomo_pass
+      MARIADB_ROOT_PASSWORD: matomo_root_pass
+    volumes:
+      - ./matomo_db:/var/lib/mysql
+    restart: unless-stopped
+
+  matomo:
+    image: matomo:latest
+    depends_on:
+      - matomo-db
+    environment:
+      MATOMO_DATABASE_HOST: matomo-db
+      MATOMO_DATABASE_ADAPTER: mysql
+      MATOMO_DATABASE_TABLES_PREFIX: matomo_
+      MATOMO_DATABASE_USERNAME: matomo
+      MATOMO_DATABASE_PASSWORD: matomo_pass
+      MATOMO_DATABASE_DBNAME: matomo
+    ports:
+      - "8080:80"
+    volumes:
+      - ./matomo_data:/var/www/html
+    restart: unless-stopped
+
+  traffic-runner:
+    image: selenium/standalone-chromium
+    depends_on:
+      - proxy
+    shm_size: 2gb
+    volumes:
+      - ./traffic_runner:/traffic_runner
+    working_dir: /traffic_runner
+    command: >
+      bash -c "pip install selenium && python run_traffic.py"
+    restart: "no"
